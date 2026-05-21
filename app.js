@@ -201,12 +201,6 @@ function selectActivity(btn, type) {
   currentActivityType = type;
 }
 
-// Smoothing buffer untuk Kalman-like filter
-let smoothLat = null, smoothLng = null;
-let lastGpsSpeed = 0;
-let lastElevation = 0;
-const SMOOTH_FACTOR = 0.3; // 0=no smooth, 1=no update
-
 function startTracking() {
   if (!navigator.geolocation) {
     showToast('⚠️ GPS tidak tersedia di perangkat ini.');
@@ -217,10 +211,6 @@ function startTracking() {
   elevPoints    = [];
   totalDistance = 0;
   lastPosition  = null;
-  smoothLat     = null;
-  smoothLng     = null;
-  lastGpsSpeed  = 0;
-  lastElevation = 0;
   isPaused      = false;
   startTime     = Date.now();
   elapsedMs     = 0;
@@ -234,16 +224,12 @@ function startTracking() {
   document.getElementById('btnPause').classList.remove('hidden');
   document.getElementById('btnStop').classList.remove('hidden');
 
-  // Timer update setiap detik — juga update pace/speed terus menerus
-  timerInterval = setInterval(() => {
-    updateTimer();
-    updateLiveStats(); // update pace & speed tiap detik
-  }, 1000);
+  timerInterval = setInterval(updateTimer, 1000);
 
   const gpsOptions = {
     enableHighAccuracy: true,
-    maximumAge:         1000,  // terima cache max 1 detik
-    timeout:            20000  // lebih toleran
+    maximumAge:         0,
+    timeout:            10000
   };
 
   watchId = navigator.geolocation.watchPosition(onGpsUpdate, onGpsError, gpsOptions);
@@ -251,109 +237,64 @@ function startTracking() {
 
 function onGpsUpdate(position) {
   const { latitude: lat, longitude: lng, accuracy, altitude, speed } = position.coords;
-
-  // Selalu update overlay dan status meskipun sedang pause
-  updateMapOverlay(position.coords);
-  updateGpsStatus('active', `Akurasi ±${Math.round(accuracy)}m`);
-
   if (isPaused) return;
 
-  // Simpan kecepatan GPS mentah (m/s → km/h)
-  if (speed != null && speed >= 0) {
-    lastGpsSpeed = speed * 3.6;
-  }
-  if (altitude != null) lastElevation = Math.round(altitude);
+  updateGpsStatus('active', `Akurasi ±${Math.round(accuracy)}m`);
+  updateMapOverlay(position.coords);
 
-  // --- SMOOTHING: exponential moving average ---
-  if (smoothLat === null) {
-    smoothLat = lat;
-    smoothLng = lng;
+  const latlng = [lat, lng];
+
+  // Filter out inaccurate jumps (>50m accuracy)
+  if (accuracy > 50 && trackPoints.length > 0) return;
+
+  // Calculate distance from last point
+  if (lastPosition) {
+    const d = haversine(lastPosition[0], lastPosition[1], lat, lng);
+    // Ignore noise (< 2m)
+    if (d > 2) {
+      totalDistance += d;
+      trackPoints.push(latlng);
+      elevPoints.push(altitude || 0);
+      routeLayer.addLatLng(latlng);
+      map.panTo(latlng, { animate: true, duration: 0.5 });
+    }
   } else {
-    smoothLat = smoothLat * SMOOTH_FACTOR + lat * (1 - SMOOTH_FACTOR);
-    smoothLng = smoothLng * SMOOTH_FACTOR + lng * (1 - SMOOTH_FACTOR);
-  }
-
-  const latlng = [smoothLat, smoothLng];
-
-  // Toleransi akurasi lebih longgar: 100m
-  // Tapi semakin buruk akurasi, semakin besar threshold jarak minimum
-  const minDist = accuracy > 30 ? 5 : 3; // meter
-
-  if (lastPosition === null) {
-    // Titik pertama
     trackPoints.push(latlng);
     elevPoints.push(altitude || 0);
-    lastPosition = latlng;
-
-    markerStart = L.circleMarker(latlng, {
-      radius: 9, color: '#00FF87', fillColor: '#00FF87', fillOpacity: 1, weight: 2
-    }).bindPopup('🚦 Start').addTo(map);
+    markerStart = L.circleMarker(latlng, { radius: 8, color: '#00FF87', fillColor: '#00FF87', fillOpacity: 1 })
+      .bindPopup('🚦 Start').addTo(map);
     map.setView(latlng, 17);
-    return;
   }
 
-  const d = haversine(lastPosition[0], lastPosition[1], smoothLat, smoothLng);
+  lastPosition = latlng;
 
-  if (d >= minDist) {
-    // Cek kecepatan tidak realistis (max 60 km/h untuk lari/trail)
-    // untuk cycling boleh sampai 80 km/h
-    const maxSpeedKmh = ['cycling'].includes(currentActivityType) ? 80 : 30;
-    const timeSinceLast = (Date.now() - startTime - elapsedMs); // kasar
-    const impliedSpeed  = (d / 1000) / ((1 / 3600)); // sangat kasar, skip check ini
-    // Hanya tolak jika akurasi sangat buruk DAN jarak loncat sangat jauh
-    if (accuracy > 80 && d > 100) {
-      console.warn('GPS spike diabaikan: d=' + d.toFixed(0) + 'm, acc=' + accuracy.toFixed(0) + 'm');
-      return;
-    }
-
-    totalDistance += d;
-    trackPoints.push(latlng);
-    elevPoints.push(altitude || lastElevation);
-    lastPosition = latlng;
-
-    routeLayer.addLatLng(latlng);
-    map.panTo(latlng, { animate: true, duration: 0.5 });
-
-    // Update marker posisi
-    if (markerCurrent) map.removeLayer(markerCurrent);
-    markerCurrent = L.circleMarker(latlng, {
-      radius: 10, color: '#FF4D00', fillColor: '#FF4D00', fillOpacity: 1, weight: 2
-    }).addTo(map);
-
-    drawElevationChart();
-    updateLiveStats();
-  }
-}
-
-function updateLiveStats() {
-  if (!startTime || isPaused) return;
+  // Live stats
   const km   = totalDistance / 1000;
   const secs = elapsedMs / 1000;
-
-  // Speed: prioritaskan GPS speed, fallback ke average speed
-  let spd = lastGpsSpeed > 0 ? lastGpsSpeed : (secs > 0 ? km / (secs / 3600) : 0);
-
-  // Pace: dari speed langsung (lebih akurat daripada avg)
-  let pace = spd > 0.5 ? 60 / spd : 0; // min/km
-
+  const spd  = speed != null ? speed * 3.6 : (secs > 0 ? km / (secs / 3600) : 0);
+  const pace = km > 0 && secs > 0 ? (secs / 60) / km : 0;
   const cal  = estimateCalories(km, currentActivityType);
+  const elev = altitude ? Math.round(altitude) : 0;
 
-  document.getElementById('lsDistance').textContent  = km.toFixed(2);
-  document.getElementById('lsSpeed').textContent     = spd.toFixed(1);
-  document.getElementById('lsPace').textContent      = pace > 0 ? formatPace(pace) : '--:--';
-  document.getElementById('lsCalories').textContent  = Math.round(cal);
-  document.getElementById('lsElevation').textContent = lastElevation;
+  document.getElementById('lsDistance').textContent = km.toFixed(2);
+  document.getElementById('lsSpeed').textContent    = spd.toFixed(1);
+  document.getElementById('lsPace').textContent     = pace > 0 ? formatPace(pace) : '--:--';
+  document.getElementById('lsCalories').textContent = Math.round(cal);
+  document.getElementById('lsElevation').textContent = elev;
+
+  // Update marker
+  if (markerCurrent) map.removeLayer(markerCurrent);
+  markerCurrent = L.circleMarker(latlng, {
+    radius: 10, color: '#FF4D00', fillColor: '#FF4D00', fillOpacity: 0.9,
+    className: 'pulse-marker'
+  }).addTo(map);
+
+  drawElevationChart();
 }
 
 function onGpsError(err) {
-  const msgs = {
-    1: 'Izin GPS ditolak. Aktifkan lokasi di browser.',
-    2: 'Posisi tidak tersedia. Pastikan GPS aktif.',
-    3: 'GPS timeout. Mencoba ulang…'
-  };
-  const msg = msgs[err.code] || 'GPS Error: ' + err.message;
-  updateGpsStatus('error', msg);
-  showToast('⚠️ ' + msg);
+  updateGpsStatus('error', 'GPS Error: ' + err.message);
+  showToast('⚠️ GPS Error: ' + err.message);
 }
 
 function pauseTracking() {
@@ -457,14 +398,8 @@ function resetTrackerUI() {
   document.getElementById('lsElevation').textContent = '0';
   totalDistance = 0;
   elapsedMs     = 0;
-  startTime     = null;
   trackPoints   = [];
   elevPoints    = [];
-  smoothLat     = null;
-  smoothLng     = null;
-  lastGpsSpeed  = 0;
-  lastElevation = 0;
-  lastPosition  = null;
   routeLayer.setLatLngs([]);
   if (markerStart)   { map.removeLayer(markerStart);   markerStart   = null; }
   if (markerCurrent) { map.removeLayer(markerCurrent); markerCurrent = null; }
