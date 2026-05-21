@@ -1,90 +1,104 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#FF4D00" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>EndorphinRun – Run. Ride. Explore.</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#0D0D0F"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="EndorphinRun"/>
+  <link rel="manifest" href="manifest.json"/>
+  <title>EndorphinRun – Runners Club Bandung</title>
   <link rel="stylesheet" href="style.css"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-  <link rel="manifest" href="manifest.json"/>
-  <link rel="apple-touch-icon" href="icons/icon-192.png"/>
 </head>
 <body>
 
-<!-- ======= AUTH OVERLAY ======= -->
-<div id="authOverlay" class="auth-overlay active">
-  <div class="auth-container">
-    <div class="auth-brand">
-      <div class="logo-animation">
-        <svg class="logo-svg" width="60" height="60" viewBox="0 0 100 100" fill="none">
-          <circle cx="50" cy="50" r="45" stroke="#FF4D00" stroke-width="2" fill="none"/>
-          <path d="M35 50 L45 40 L55 50 L65 40" stroke="#FF4D00" stroke-width="3" fill="none" stroke-linecap="round"/>
-          <path d="M35 60 L45 50 L55 60 L65 50" stroke="#00FF87" stroke-width="3" fill="none" stroke-linecap="round"/>
-          <circle cx="50" cy="50" r="3" fill="#FF4D00"/>
-        </svg>
-      </div>
-      <h1>EndorphinRun</h1>
-      <p>Run. Ride. Explore.</p>
-    </div>
-    <div class="auth-tabs">
-      <button class="auth-tab active" onclick="switchAuth('login')">Masuk</button>
-      <button class="auth-tab" onclick="switchAuth('register')">Daftar</button>
-    </div>
+<!-- ======= SPLASH ======= -->
+<div id="splash" class="splash">
+  <div class="splash-inner">
+    <img src="logo.png" alt="EndorphinRun" class="splash-logo"/>
+    <div class="splash-bar"><div class="splash-fill"></div></div>
+  </div>
+</div>
 
-    <!-- LOGIN FORM -->
-    <div id="loginForm" class="auth-form active">
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="loginEmail" placeholder="email@kamu.com"/>
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="loginPassword" placeholder="••••••••"/>
-      </div>
-      <div id="loginError" class="auth-error"></div>
-      <button class="btn-primary full-width" onclick="handleLogin()">
-        <span>⚡</span> Masuk
-      </button>
-      <p class="auth-alt">Belum punya akun? <a onclick="switchAuth('register')">Daftar sekarang</a></p>
+<!-- ======= AUTH ======= -->
+<div id="authOverlay" class="auth-overlay hidden">
+  <div class="auth-left">
+    <img src="logo.png" alt="EndorphinRun" class="auth-logo"/>
+    <h1 class="auth-headline">RUNNERS<br/>CLUB<br/>BANDUNG</h1>
+    <p class="auth-tagline">Run. Ride. Explore.<br/>Jadilah lebih kuat setiap hari.</p>
+    <div class="auth-decorLines">
+      <span></span><span></span><span></span>
     </div>
+  </div>
+  <div class="auth-right">
+    <div class="auth-box">
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuth('login')">Masuk</button>
+        <button class="auth-tab" onclick="switchAuth('register')">Daftar</button>
+      </div>
 
-    <!-- REGISTER FORM -->
-    <div id="registerForm" class="auth-form">
-      <div class="form-group">
-        <label>Nama Lengkap</label>
-        <input type="text" id="regName" placeholder="Nama kamu"/>
+      <div id="loginForm" class="auth-form active">
+        <h2 class="form-title">Selamat Datang Kembali</h2>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="loginEmail" placeholder="email@kamu.com" autocomplete="email"/>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <div class="input-wrap">
+            <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"/>
+            <button class="eye-btn" onclick="togglePw('loginPassword',this)">👁</button>
+          </div>
+        </div>
+        <div id="loginError" class="auth-error"></div>
+        <button class="btn-primary full-width" onclick="handleLogin()">
+          <span>Masuk</span> <span class="btn-arrow">→</span>
+        </button>
+        <p class="auth-alt">Belum punya akun? <a onclick="switchAuth('register')">Daftar sekarang</a></p>
       </div>
-      <div class="form-group">
-        <label>Username</label>
-        <input type="text" id="regUsername" placeholder="@username"/>
+
+      <div id="registerForm" class="auth-form">
+        <h2 class="form-title">Bergabung Sekarang</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nama Lengkap</label>
+            <input type="text" id="regName" placeholder="Nama kamu"/>
+          </div>
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="regUsername" placeholder="username"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="regEmail" placeholder="email@kamu.com"/>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <div class="input-wrap">
+            <input type="password" id="regPassword" placeholder="Min. 6 karakter"/>
+            <button class="eye-btn" onclick="togglePw('regPassword',this)">👁</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Aktivitas Favorit</label>
+          <div class="act-select-grid">
+            <label class="act-radio"><input type="radio" name="regAct" value="running" checked/><span>🏃 Lari</span></label>
+            <label class="act-radio"><input type="radio" name="regAct" value="cycling"/><span>🚴 Sepeda</span></label>
+            <label class="act-radio"><input type="radio" name="regAct" value="trail"/><span>⛰️ Trail</span></label>
+            <label class="act-radio"><input type="radio" name="regAct" value="hiking"/><span>🥾 Hiking</span></label>
+          </div>
+        </div>
+        <div id="regError" class="auth-error"></div>
+        <button class="btn-primary full-width" onclick="handleRegister()">
+          <span>Buat Akun</span> <span class="btn-arrow">→</span>
+        </button>
+        <p class="auth-alt">Sudah punya akun? <a onclick="switchAuth('login')">Masuk</a></p>
       </div>
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="regEmail" placeholder="email@kamu.com"/>
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="regPassword" placeholder="Min. 6 karakter"/>
-      </div>
-      <div class="form-group">
-        <label>Aktivitas Favorit</label>
-        <select id="regActivity">
-          <option value="running">🏃 Lari</option>
-          <option value="cycling">🚴 Sepeda</option>
-          <option value="trail">⛰️ Trail Run</option>
-          <option value="hiking">🥾 Hiking</option>
-        </select>
-      </div>
-      <div id="regError" class="auth-error"></div>
-      <button class="btn-primary full-width" onclick="handleRegister()">
-        <span>🚀</span> Buat Akun
-      </button>
-      <p class="auth-alt">Sudah punya akun? <a onclick="switchAuth('login')">Masuk</a></p>
     </div>
   </div>
 </div>
@@ -92,347 +106,310 @@
 <!-- ======= MAIN APP ======= -->
 <div id="mainApp" class="hidden">
 
-  <!-- NAVBAR -->
-  <nav class="navbar">
-    <div class="nav-brand">
-      <svg class="nav-logo" width="32" height="32" viewBox="0 0 100 100" fill="none">
-        <circle cx="50" cy="50" r="42" stroke="#FF4D00" stroke-width="2" fill="none"/>
-        <path d="M35 50 L45 40 L55 50 L65 40" stroke="#FF4D00" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-        <path d="M35 60 L45 50 L55 60 L65 50" stroke="#00FF87" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-      </svg>
-      <span>EndorphinRun</span>
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-brand">
+      <img src="logo.png" alt="EndorphinRun" class="sb-logo"/>
     </div>
-    <div class="nav-links">
-      <a onclick="showPage('dashboard')" class="nav-link active" data-page="dashboard">
-        <span>📊</span> Dashboard
+    <nav class="sb-nav">
+      <a class="sb-link active" data-page="dashboard" onclick="showPage('dashboard')">
+        <span class="sb-icon">◈</span><span class="sb-label">Dashboard</span>
       </a>
-      <a onclick="showPage('tracker')" class="nav-link" data-page="tracker">
-        <span>📍</span> Tracker
+      <a class="sb-link" data-page="tracker" onclick="showPage('tracker')">
+        <span class="sb-icon">⊕</span><span class="sb-label">GPS Tracker</span>
       </a>
-      <a onclick="showPage('activities')" class="nav-link" data-page="activities">
-        <span>📋</span> Aktivitas
+      <a class="sb-link" data-page="activities" onclick="showPage('activities')">
+        <span class="sb-icon">◉</span><span class="sb-label">Aktivitas</span>
       </a>
-      <a onclick="showPage('leaderboard')" class="nav-link" data-page="leaderboard">
-        <span>🏆</span> Leaderboard
+      <a class="sb-link" data-page="leaderboard" onclick="showPage('leaderboard')">
+        <span class="sb-icon">◆</span><span class="sb-label">Leaderboard</span>
       </a>
-      <a onclick="showPage('community')" class="nav-link" data-page="community">
-        <span>👥</span> Komunitas
+      <a class="sb-link" data-page="community" onclick="showPage('community')">
+        <span class="sb-icon">◎</span><span class="sb-label">Komunitas</span>
       </a>
+    </nav>
+    <div class="sb-bottom">
+      <div class="sb-user" id="sbUser">
+        <div class="sb-avatar" id="sbAvatar"></div>
+        <div class="sb-userinfo">
+          <div class="sb-uname" id="sbName"></div>
+          <div class="sb-username" id="sbUsername"></div>
+        </div>
+      </div>
+      <button class="sb-logout" onclick="handleLogout()">↩ Keluar</button>
     </div>
-    <div class="nav-user">
-      <span id="navUsername" class="nav-username"></span>
-      <div class="nav-avatar" id="navAvatar"></div>
-      <button class="btn-logout" onclick="handleLogout()">Keluar</button>
-    </div>
-    <button class="hamburger" onclick="toggleMenu()">☰</button>
-  </nav>
-  <div class="mobile-menu" id="mobileMenu">
-    <a onclick="showPage('dashboard');toggleMenu()">📊 Dashboard</a>
-    <a onclick="showPage('tracker');toggleMenu()">📍 Tracker</a>
-    <a onclick="showPage('activities');toggleMenu()">📋 Aktivitas</a>
-    <a onclick="showPage('leaderboard');toggleMenu()">🏆 Leaderboard</a>
-    <a onclick="showPage('community');toggleMenu()">👥 Komunitas</a>
-    <a onclick="handleLogout()">🚪 Keluar</a>
-  </div>
+  </aside>
 
-  <!-- ====== DASHBOARD ====== -->
-  <div id="page-dashboard" class="page active">
-    <section class="hero">
-      <div class="hero-bg">
-        <div class="hero-grid"></div>
-        <div class="hero-orb orb1"></div>
-        <div class="hero-orb orb2"></div>
-      </div>
-      <div class="hero-content">
-        <div class="hero-badge">
-          <span class="pulse-text">⚡</span> CLUB LARI BANDUNG
+  <!-- TOPBAR (mobile) -->
+  <header class="topbar">
+    <button class="topbar-menu" onclick="toggleSidebar()">☰</button>
+    <img src="logo.png" alt="EndorphinRun" class="topbar-logo"/>
+    <div class="topbar-avatar" id="topbarAvatar" onclick="toggleSidebar()"></div>
+  </header>
+
+  <!-- CONTENT AREA -->
+  <main class="content">
+
+    <!-- ====== DASHBOARD ====== -->
+    <div id="page-dashboard" class="page active">
+      <div class="dash-hero">
+        <div class="dh-bg">
+          <div class="dh-noise"></div>
+          <div class="dh-orb o1"></div>
+          <div class="dh-orb o2"></div>
+          <div class="dh-lines"></div>
         </div>
-        <h1 class="hero-title">SELAMAT DATANG,<br/><span id="heroName">RUNNER</span></h1>
-        <p class="hero-sub">Track aktivitasmu. Jadilah lebih kuat setiap hari.</p>
-        <div class="hero-stats-row">
-          <div class="hero-stat">
-            <span class="hs-num" id="hsTotalKm">0</span>
-            <span class="hs-label">Total KM</span>
-          </div>
-          <div class="hero-stat">
-            <span class="hs-num" id="hsTotalAct">0</span>
-            <span class="hs-label">Aktivitas</span>
-          </div>
-          <div class="hero-stat">
-            <span class="hs-num" id="hsTotalCal">0</span>
-            <span class="hs-label">Kalori</span>
-          </div>
+        <div class="dh-content">
+          <div class="dh-greeting">Halo, <span id="heroName">Runner</span> 👋</div>
+          <h1 class="dh-title">READY TO<br/><em>CRUSH IT?</em></h1>
+          <button class="btn-start-big" onclick="showPage('tracker')">
+            <span class="bsb-icon">▶</span>
+            <span>Mulai Aktivitas</span>
+          </button>
         </div>
-        <button class="btn-hero" onclick="showPage('tracker')">
-          <span>⚡</span> Mulai Aktivitas
-        </button>
-      </div>
-      <div class="hero-visual">
-        <div class="pulse-ring"></div>
-        <div class="pulse-ring delay1"></div>
-        <div class="pulse-ring delay2"></div>
-        <div class="hero-icon-big">🏃</div>
-      </div>
-    </section>
-
-    <section class="section-card glass-card">
-      <h2 class="section-title">Minggu Ini</h2>
-      <div class="week-chart" id="weekChart"></div>
-      <div class="week-labels">
-        <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span>Min</span>
-      </div>
-    </section>
-
-    <section class="section-card glass-card">
-      <div class="section-head">
-        <h2 class="section-title">Aktivitas Terakhir</h2>
-        <button class="btn-sm" onclick="showPage('activities')">Lihat Semua →</button>
-      </div>
-      <div id="recentActivities" class="activity-list"></div>
-    </section>
-
-    <section class="section-card glass-card">
-      <h2 class="section-title">🏅 Pencapaian</h2>
-      <div class="achievements-grid" id="achievementsGrid"></div>
-    </section>
-  </div>
-
-  <!-- ====== TRACKER ====== -->
-  <div id="page-tracker" class="page">
-    <div class="tracker-layout">
-      <div class="tracker-panel glass-card">
-        <h2 class="panel-title">📍 GPS Tracker</h2>
-
-        <div class="activity-selector">
-          <button class="act-btn active" data-type="running" onclick="selectActivity(this,'running')">🏃 Lari</button>
-          <button class="act-btn" data-type="cycling" onclick="selectActivity(this,'cycling')">🚴 Sepeda</button>
-          <button class="act-btn" data-type="trail" onclick="selectActivity(this,'trail')">⛰️ Trail</button>
-          <button class="act-btn" data-type="hiking" onclick="selectActivity(this,'hiking')">🥾 Hiking</button>
-          <button class="act-btn" data-type="walking" onclick="selectActivity(this,'walking')">🚶 Jalan</button>
-        </div>
-
-        <div class="live-stats">
-          <div class="ls-item">
-            <div class="ls-val" id="lsDistance">0.00</div>
-            <div class="ls-label">km</div>
+        <div class="dh-stats">
+          <div class="dh-stat-card">
+            <div class="dsc-val" id="hsTotalKm">0.0</div>
+            <div class="dsc-label">Total KM</div>
+            <div class="dsc-icon">🛣️</div>
           </div>
-          <div class="ls-item">
-            <div class="ls-val" id="lsDuration">00:00:00</div>
-            <div class="ls-label">waktu</div>
+          <div class="dh-stat-card">
+            <div class="dsc-val" id="hsTotalAct">0</div>
+            <div class="dsc-label">Aktivitas</div>
+            <div class="dsc-icon">⚡</div>
           </div>
-          <div class="ls-item">
-            <div class="ls-val" id="lsPace">--:--</div>
-            <div class="ls-label">min/km</div>
+          <div class="dh-stat-card">
+            <div class="dsc-val" id="hsTotalCal">0</div>
+            <div class="dsc-label">Kalori</div>
+            <div class="dsc-icon">🔥</div>
           </div>
-          <div class="ls-item">
-            <div class="ls-val" id="lsSpeed">0.0</div>
-            <div class="ls-label">km/h</div>
-          </div>
-          <div class="ls-item">
-            <div class="ls-val" id="lsCalories">0</div>
-            <div class="ls-label">kkal</div>
-          </div>
-          <div class="ls-item">
-            <div class="ls-val" id="lsElevation">0</div>
-            <div class="ls-label">m elev</div>
+          <div class="dh-stat-card">
+            <div class="dsc-val" id="hsStreak">0</div>
+            <div class="dsc-label">Hari Streak</div>
+            <div class="dsc-icon">🏅</div>
           </div>
         </div>
-
-        <div class="gps-status" id="gpsStatus">
-          <div class="gps-dot" id="gpsDot"></div>
-          <span id="gpsText">GPS Siap</span>
-        </div>
-
-        <div class="tracker-controls">
-          <button class="btn-start" id="btnStart" onclick="startTracking()">▶ Mulai</button>
-          <button class="btn-pause hidden" id="btnPause" onclick="pauseTracking()">⏸ Pause</button>
-          <button class="btn-stop hidden" id="btnStop" onclick="stopTracking()">⏹ Selesai</button>
-        </div>
-
-        <div class="elevation-chart-wrap">
-          <p class="chart-label">Profil Elevasi</p>
-          <canvas id="elevCanvas" width="300" height="80"></canvas>
-        </div>
       </div>
 
-      <div class="map-wrap">
-        <div id="map"></div>
-        <div class="map-overlay-info glass-card">
-          <div class="moi-item">📍 <span id="mapLat">--</span></div>
-          <div class="moi-item">📍 <span id="mapLng">--</span></div>
-          <div class="moi-item">🎯 Akurasi: <span id="mapAcc">--</span>m</div>
-        </div>
-      </div>
-    </div>
-
-    <div id="saveModal" class="modal hidden">
-      <div class="modal-box glass-card">
-        <h3>💾 Simpan Aktivitas</h3>
-        <div class="modal-stats">
-          <div class="ms-item"><span id="saveDist">0</span> km</div>
-          <div class="ms-item"><span id="saveTime">0</span></div>
-          <div class="ms-item"><span id="saveCal">0</span> kkal</div>
-        </div>
-        <div class="form-group">
-          <label>Judul Aktivitas</label>
-          <input type="text" id="activityTitle" placeholder="Contoh: Morning Run Dago"/>
-        </div>
-        <div class="form-group">
-          <label>Catatan</label>
-          <textarea id="activityNote" placeholder="Bagaimana perasaanmu?"></textarea>
-        </div>
-        <div class="modal-btns">
-          <button class="btn-primary" onclick="saveActivity()">Simpan</button>
-          <button class="btn-outline" onclick="discardActivity()">Buang</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ====== ACTIVITIES ====== -->
-  <div id="page-activities" class="page">
-    <div class="page-header">
-      <h2>📋 Semua Aktivitas</h2>
-      <div class="filter-row">
-        <button class="filter-btn active" onclick="filterActivities('all', this)">Semua</button>
-        <button class="filter-btn" onclick="filterActivities('running', this)">🏃 Lari</button>
-        <button class="filter-btn" onclick="filterActivities('cycling', this)">🚴 Sepeda</button>
-        <button class="filter-btn" onclick="filterActivities('trail', this)">⛰️ Trail</button>
-        <button class="filter-btn" onclick="filterActivities('hiking', this)">🥾 Hiking</button>
-        <button class="filter-btn" onclick="filterActivities('walking', this)">🚶 Jalan</button>
-      </div>
-    </div>
-    <div id="allActivitiesList" class="activity-list full"></div>
-  </div>
-
-  <!-- ====== LEADERBOARD ====== -->
-  <div id="page-leaderboard" class="page">
-    <div class="page-header">
-      <h2>🏆 Leaderboard</h2>
-      <div class="filter-row">
-        <button class="filter-btn active" onclick="loadLeaderboard('km', this)">Total KM</button>
-        <button class="filter-btn" onclick="loadLeaderboard('activities', this)">Aktivitas</button>
-        <button class="filter-btn" onclick="loadLeaderboard('calories', this)">Kalori</button>
-      </div>
-    </div>
-    <div id="leaderboardList" class="leaderboard-list"></div>
-  </div>
-
-  <!-- ====== COMMUNITY ====== -->
-  <div id="page-community" class="page">
-    <div class="community-hero">
-      <h2>🤝 Komunitas EndorphinRun</h2>
-      <p>Bergabung dengan ribuan pelari dan pesepeda Bandung</p>
-    </div>
-
-    <div class="community-grid">
-      <div class="comm-card glass-card social-card">
-        <h3>📱 Gabung Grup Kami</h3>
-        <div class="social-links">
-          <a href="#" class="slink wa">
-            <span class="slink-icon">💬</span>
-            <div class="slink-info">
-              <strong>WhatsApp Group</strong>
-              <small>Diskusi & event lari harian</small>
+      <div class="dash-body">
+        <div class="dash-col-main">
+          <div class="card">
+            <div class="card-head">
+              <h3>Minggu Ini</h3>
+              <span class="card-sub" id="weekKmTotal">0 km</span>
             </div>
-            <span class="slink-arrow">→</span>
-          </a>
-          <a href="#" class="slink ig">
-            <span class="slink-icon">📸</span>
-            <div class="slink-info">
-              <strong>Instagram</strong>
-              <small>@endorphinrun</small>
+            <div class="week-chart" id="weekChart"></div>
+            <div class="week-labels"><span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span>Min</span></div>
+          </div>
+          <div class="card">
+            <div class="card-head">
+              <h3>Aktivitas Terakhir</h3>
+              <button class="btn-link" onclick="showPage('activities')">Lihat Semua →</button>
             </div>
-            <span class="slink-arrow">→</span>
-          </a>
-          <a href="#" class="slink tt">
-            <span class="slink-icon">🎵</span>
-            <div class="slink-info">
-              <strong>TikTok</strong>
-              <small>@endorphinrun</small>
-            </div>
-            <span class="slink-arrow">→</span>
-          </a>
+            <div id="recentActivities" class="activity-list"></div>
+          </div>
+        </div>
+        <div class="dash-col-side">
+          <div class="card">
+            <h3 class="card-head-solo">Pencapaian</h3>
+            <div id="achievementsGrid" class="achievements-grid"></div>
+          </div>
         </div>
       </div>
+    </div>
 
-      <div class="comm-card glass-card">
-        <h3>📅 Event Mendatang</h3>
-        <div class="events-list">
-          <div class="event-item">
-            <div class="event-date"><span>25</span>MEI</div>
-            <div class="event-info">
-              <strong>Saturday Morning Run</strong>
-              <small>📍 Lapangan Gasibu, 05:30 WIB</small>
+    <!-- ====== TRACKER ====== -->
+    <div id="page-tracker" class="page">
+      <div class="tracker-wrap">
+        <div class="tracker-panel">
+          <div class="tp-header">
+            <h2>GPS Tracker</h2>
+            <div class="gps-pill" id="gpsPill">
+              <span class="gps-dot" id="gpsDot"></span>
+              <span id="gpsText">Siap</span>
             </div>
           </div>
-          <div class="event-item">
-            <div class="event-date"><span>01</span>JUN</div>
-            <div class="event-info">
-              <strong>Dago Trail Adventure</strong>
-              <small>📍 Taman Hutan Dago, 05:00 WIB</small>
+
+          <div class="act-chips">
+            <button class="chip active" data-type="running" onclick="selectActivity(this,'running')">🏃 Lari</button>
+            <button class="chip" data-type="cycling" onclick="selectActivity(this,'cycling')">🚴 Sepeda</button>
+            <button class="chip" data-type="trail" onclick="selectActivity(this,'trail')">⛰️ Trail</button>
+            <button class="chip" data-type="hiking" onclick="selectActivity(this,'hiking')">🥾 Hiking</button>
+            <button class="chip" data-type="walking" onclick="selectActivity(this,'walking')">🚶 Jalan</button>
+          </div>
+
+          <div class="big-stat-row">
+            <div class="big-stat">
+              <div class="big-val" id="lsDistance">0.00</div>
+              <div class="big-unit">KM</div>
+            </div>
+            <div class="big-divider"></div>
+            <div class="big-stat">
+              <div class="big-val mono" id="lsDuration">00:00:00</div>
+              <div class="big-unit">WAKTU</div>
             </div>
           </div>
-          <div class="event-item">
-            <div class="event-date"><span>08</span>JUN</div>
-            <div class="event-info">
-              <strong>Cycling Lembang Loop</strong>
-              <small>📍 Titik Kumpul Dago, 06:00 WIB</small>
+
+          <div class="mini-stats">
+            <div class="ms-box">
+              <div class="ms-val" id="lsPace">--:--</div>
+              <div class="ms-lbl">min/km</div>
+            </div>
+            <div class="ms-box">
+              <div class="ms-val" id="lsSpeed">0.0</div>
+              <div class="ms-lbl">km/h</div>
+            </div>
+            <div class="ms-box">
+              <div class="ms-val" id="lsCalories">0</div>
+              <div class="ms-lbl">kkal</div>
+            </div>
+            <div class="ms-box">
+              <div class="ms-val" id="lsElevation">0</div>
+              <div class="ms-lbl">m elev</div>
             </div>
           </div>
+
+          <div class="ctrl-row">
+            <button class="ctrl-btn start" id="btnStart" onclick="startTracking()">▶ MULAI</button>
+            <button class="ctrl-btn pause hidden" id="btnPause" onclick="pauseTracking()">⏸ PAUSE</button>
+            <button class="ctrl-btn stop hidden" id="btnStop" onclick="stopTracking()">⏹ SELESAI</button>
+          </div>
+
+          <div class="elev-wrap">
+            <div class="elev-label">Profil Elevasi</div>
+            <canvas id="elevCanvas" width="300" height="72"></canvas>
+          </div>
+
+          <div class="coord-box">
+            <span>📍 <span id="mapLat">--</span>, <span id="mapLng">--</span></span>
+            <span>🎯 ±<span id="mapAcc">--</span>m</span>
+          </div>
+        </div>
+
+        <div class="map-area">
+          <div id="map"></div>
+          <div class="map-type-btn" onclick="toggleMapType()">🗺</div>
         </div>
       </div>
 
-      <div class="comm-card glass-card">
-        <h3>👥 Member Terbaru</h3>
-        <div id="membersList" class="members-list"></div>
-      </div>
-
-      <div class="comm-card glass-card club-stats-card">
-        <h3>📊 Statistik Club</h3>
-        <div class="club-stats-grid">
-          <div class="cs-item">
-            <div class="cs-icon">👥</div>
-            <div class="cs-val" id="csMembers">0</div>
-            <div class="cs-label">Members</div>
+      <!-- SAVE MODAL -->
+      <div id="saveModal" class="modal hidden">
+        <div class="modal-card">
+          <div class="modal-icon">🏁</div>
+          <h3>Aktivitas Selesai!</h3>
+          <div class="modal-stats-row">
+            <div class="msr-item"><div class="msr-val" id="saveDist">0</div><div class="msr-lbl">km</div></div>
+            <div class="msr-item"><div class="msr-val" id="saveTime">0</div><div class="msr-lbl">waktu</div></div>
+            <div class="msr-item"><div class="msr-val" id="saveCal">0</div><div class="msr-lbl">kkal</div></div>
           </div>
-          <div class="cs-item">
-            <div class="cs-icon">🛣️</div>
-            <div class="cs-val" id="csTotalKm">0</div>
-            <div class="cs-label">Total KM</div>
-          </div>
-          <div class="cs-item">
-            <div class="cs-icon">🏃</div>
-            <div class="cs-val" id="csTotalAct">0</div>
-            <div class="cs-label">Aktivitas</div>
-          </div>
-          <div class="cs-item">
-            <div class="cs-icon">🔥</div>
-            <div class="cs-val" id="csTotalCal">0</div>
-            <div class="cs-label">Total Kkal</div>
+          <div class="form-group"><label>Judul</label><input type="text" id="activityTitle" placeholder="Morning Run Dago…"/></div>
+          <div class="form-group"><label>Catatan</label><textarea id="activityNote" placeholder="Bagaimana rasanya?"></textarea></div>
+          <div class="modal-btns">
+            <button class="btn-primary" onclick="saveActivity()">💾 Simpan</button>
+            <button class="btn-ghost" onclick="discardActivity()">Buang</button>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-</div>
+    <!-- ====== ACTIVITIES ====== -->
+    <div id="page-activities" class="page">
+      <div class="page-top">
+        <h2>Semua Aktivitas</h2>
+        <div class="chips-row">
+          <button class="chip active" onclick="filterActivities('all',this)">Semua</button>
+          <button class="chip" onclick="filterActivities('running',this)">🏃 Lari</button>
+          <button class="chip" onclick="filterActivities('cycling',this)">🚴 Sepeda</button>
+          <button class="chip" onclick="filterActivities('trail',this)">⛰️ Trail</button>
+          <button class="chip" onclick="filterActivities('hiking',this)">🥾 Hiking</button>
+          <button class="chip" onclick="filterActivities('walking',this)">🚶 Jalan</button>
+        </div>
+      </div>
+      <div id="allActivitiesList" class="activity-list padded"></div>
+    </div>
 
+    <!-- ====== LEADERBOARD ====== -->
+    <div id="page-leaderboard" class="page">
+      <div class="page-top">
+        <h2>🏆 Leaderboard</h2>
+        <div class="chips-row">
+          <button class="chip active" onclick="loadLeaderboard('km',this)">Total KM</button>
+          <button class="chip" onclick="loadLeaderboard('activities',this)">Aktivitas</button>
+          <button class="chip" onclick="loadLeaderboard('calories',this)">Kalori</button>
+        </div>
+      </div>
+      <div id="leaderboardList" class="lb-list"></div>
+    </div>
+
+    <!-- ====== COMMUNITY ====== -->
+    <div id="page-community" class="page">
+      <div class="comm-banner">
+        <img src="logo.png" alt="" class="comm-logo"/>
+        <div>
+          <h2>Komunitas EndorphinRun</h2>
+          <p>Ribuan pelari & pesepeda Bandung. Satu semangat.</p>
+        </div>
+      </div>
+      <div class="comm-grid">
+        <div class="card">
+          <h3 class="card-head-solo">📱 Gabung Grup</h3>
+          <div class="social-list">
+            <a href="https://chat.whatsapp.com/" target="_blank" class="social-item wa">
+              <div class="si-icon">💬</div>
+              <div class="si-body"><strong>WhatsApp Group</strong><small>Diskusi & info event harian</small></div>
+              <div class="si-arr">↗</div>
+            </a>
+            <a href="https://www.instagram.com/endorphinrun" target="_blank" class="social-item ig">
+              <div class="si-icon">📸</div>
+              <div class="si-body"><strong>Instagram</strong><small>@endorphinrun</small></div>
+              <div class="si-arr">↗</div>
+            </a>
+            <a href="https://www.tiktok.com/@endorphinrun" target="_blank" class="social-item tt">
+              <div class="si-icon">🎵</div>
+              <div class="si-body"><strong>TikTok</strong><small>@endorphinrun</small></div>
+              <div class="si-arr">↗</div>
+            </a>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-head-solo">📅 Event Mendatang</h3>
+          <div class="events-list">
+            <div class="event-row"><div class="ev-date"><b>25</b><small>MEI</small></div><div class="ev-info"><strong>Saturday Morning Run</strong><span>📍 Lapangan Gasibu · 05:30 WIB · All levels</span></div></div>
+            <div class="event-row"><div class="ev-date" style="background:var(--accent2)"><b>01</b><small>JUN</small></div><div class="ev-info"><strong>Dago Trail Adventure</strong><span>📍 Taman Hutan Dago · 05:00 WIB · 12km</span></div></div>
+            <div class="event-row"><div class="ev-date" style="background:#2b7fff"><b>08</b><small>JUN</small></div><div class="ev-info"><strong>Cycling Lembang Loop</strong><span>📍 Titik Kumpul Dago · 06:00 WIB · 45km</span></div></div>
+            <div class="event-row"><div class="ev-date" style="background:#7c3aed"><b>15</b><small>JUN</small></div><div class="ev-info"><strong>Anniversary 5K Race</strong><span>📍 Alun-alun Bandung · 06:30 WIB · Ada medali!</span></div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-head-solo">👥 Member Terbaru</h3>
+          <div id="membersList"></div>
+        </div>
+
+        <div class="card club-stat-card">
+          <h3 class="card-head-solo">📊 Statistik Club</h3>
+          <div class="cs-grid">
+            <div class="cs-item"><div class="cs-icon">👥</div><div class="cs-val" id="csMembers">0</div><div class="cs-lbl">Members</div></div>
+            <div class="cs-item"><div class="cs-icon">🛣️</div><div class="cs-val" id="csTotalKm">0</div><div class="cs-lbl">Total KM</div></div>
+            <div class="cs-item"><div class="cs-icon">⚡</div><div class="cs-val" id="csTotalAct">0</div><div class="cs-lbl">Aktivitas</div></div>
+            <div class="cs-item"><div class="cs-icon">🔥</div><div class="cs-val" id="csTotalCal">0</div><div class="cs-lbl">Kkal</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div><!-- end mainApp -->
+
+<!-- SIDEBAR OVERLAY -->
+<div class="sb-overlay hidden" id="sbOverlay" onclick="toggleSidebar()"></div>
+
+<!-- TOAST -->
 <div id="toast" class="toast hidden"></div>
-<div id="installPrompt" class="install-prompt hidden">
-  <div class="install-content">
-    <span>📱</span>
-    <div>
-      <strong>Install EndorphinRun</strong>
-      <small>Tambahkan ke layar utama untuk pengalaman terbaik</small>
-    </div>
-    <button id="installBtn">Install</button>
-    <button id="closeInstall">✕</button>
-  </div>
-</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="db.js"></script>
-<script src="app.js"></script>  
+<script src="app.js"></script>
 </body>
 </html>
