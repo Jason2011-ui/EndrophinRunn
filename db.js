@@ -101,6 +101,16 @@ function dbDeleteActivity(actId) {
   });
 }
 
+function dbUpdateUser(userData) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('users', 'readwrite');
+    const store = tx.objectStore('users');
+    const req = store.put(userData);
+    req.onsuccess = () => resolve(userData);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
 function sessionSet(user) { localStorage.setItem('er_session', JSON.stringify(user)); }
 function sessionGet() { const d = localStorage.getItem('er_session'); return d ? JSON.parse(d) : null; }
 function sessionClear() { localStorage.removeItem('er_session'); }

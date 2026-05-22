@@ -142,25 +142,59 @@
         <span class="accordion-arrow" id="accArrow">›</span>
       </button>
       <div id="intervalAccordion" class="accordion-body hidden">
-        <div class="input-float compact">
-          <select id="intMode" onchange="toggleIntervalFields()">
-            <option value="none">Disabled</option>
-            <option value="time">Time-Based (Seconds)</option>
-            <option value="distance">Distance-Based (Meters)</option>
-          </select>
+        <!-- Enable toggle -->
+        <div class="int-enable-row">
+          <label class="int-toggle-label">
+            <input type="checkbox" id="intEnabled" onchange="toggleIntervalEnabled()">
+            <span class="int-toggle-track"><span class="int-toggle-thumb"></span></span>
+            Enable Intervals
+          </label>
         </div>
-        <div id="intervalInputs" class="interval-grid hidden">
-          <div class="input-float compact">
-            <input type="number" id="intWork" value="60" min="1" placeholder=" ">
-            <label id="lblWork">Work (s)</label>
+
+        <div id="intervalInputs" class="hidden">
+          <!-- Row 1: Work distance + Rest distance -->
+          <div class="int-section-label">📏 Distance per Phase</div>
+          <div class="int-row-2">
+            <div class="input-float compact">
+              <input type="number" id="intWorkDist" value="400" min="50" step="50" placeholder=" ">
+              <label>Work (m)</label>
+            </div>
+            <div class="input-float compact">
+              <input type="number" id="intRestDist" value="200" min="50" step="50" placeholder=" ">
+              <label>Rest (m)</label>
+            </div>
           </div>
-          <div class="input-float compact">
-            <input type="number" id="intRest" value="90" min="1" placeholder=" ">
-            <label id="lblRest">Rest (s)</label>
+
+          <!-- Row 2: Target pace work + rest -->
+          <div class="int-section-label">🎯 Target Pace</div>
+          <div class="int-row-2">
+            <div class="int-pace-wrap">
+              <span class="int-pace-unit">Work</span>
+              <div class="int-pace-fields">
+                <input type="number" id="intWorkPaceMin" value="5" min="2" max="20" placeholder="mm" class="pace-input">
+                <span class="pace-sep">:</span>
+                <input type="number" id="intWorkPaceSec" value="30" min="0" max="59" placeholder="ss" class="pace-input">
+              </div>
+              <span class="int-pace-unit muted">min/km</span>
+            </div>
+            <div class="int-pace-wrap">
+              <span class="int-pace-unit">Rest</span>
+              <div class="int-pace-fields">
+                <input type="number" id="intRestPaceMin" value="7" min="2" max="20" placeholder="mm" class="pace-input">
+                <span class="pace-sep">:</span>
+                <input type="number" id="intRestPaceSec" value="0" min="0" max="59" placeholder="ss" class="pace-input">
+              </div>
+              <span class="int-pace-unit muted">min/km</span>
+            </div>
           </div>
-          <div class="input-float compact">
-            <input type="number" id="intCycles" value="5" min="1" placeholder=" ">
-            <label>Sets</label>
+
+          <!-- Row 3: Sets -->
+          <div class="int-section-label">🔁 Sets</div>
+          <div class="int-row-1">
+            <div class="input-float compact">
+              <input type="number" id="intCycles" value="5" min="1" max="20" placeholder=" ">
+              <label>Number of Sets</label>
+            </div>
           </div>
         </div>
       </div>
@@ -187,7 +221,7 @@
           <div class="hud-sep"></div>
           <div class="hud-metric">
             <span class="m-val" id="hudPace">--:--</span>
-            <span class="m-lbl">Pace</span>
+            <span class="m-lbl" id="hudPaceLabel">Pace</span>
           </div>
           <div class="hud-sep"></div>
           <div class="hud-metric">
@@ -198,11 +232,17 @@
       </div>
 
       <div id="intervalHUD" class="interval-hud glass hidden">
-        <div class="iv-phase" id="hudPhaseName">⚡ WORK</div>
-        <div class="iv-info">
-          <span id="hudCycleProgress">Set 1 / 5</span>
+        <div class="iv-top-row">
+          <div class="iv-phase" id="hudPhaseName">⚡ WORK</div>
+          <div class="iv-cycle-badge" id="hudCycleProgress">Set 1 / 5</div>
+        </div>
+        <div class="iv-info-row">
+          <span id="hudPhaseTarget">-- m left</span>
           <span class="iv-dot">•</span>
-          <span id="hudPhaseTarget">--</span>
+          <span id="hudPaceStatus" class="iv-pace-ok">🎯 On pace</span>
+        </div>
+        <div class="iv-progress-bar-wrap">
+          <div class="iv-progress-bar" id="ivProgressBar" style="width:0%"></div>
         </div>
       </div>
 
@@ -235,11 +275,19 @@
   <div id="pageProfile" class="page">
     <div class="page-scroll">
       <div class="profile-hero">
-        <div class="profile-avatar-ring">
+        <div class="profile-avatar-ring" onclick="openEditProfile()" style="cursor:pointer;position:relative;">
           <div class="profile-avatar" id="profileAvatar">A</div>
+          <div class="avatar-edit-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </div>
         </div>
         <h2 class="profile-name" id="profileName">Athlete</h2>
         <p class="profile-email" id="profileEmail">runner@runfun.app</p>
+        <p class="profile-bio" id="profileBio"></p>
+        <button class="btn-edit-profile" onclick="openEditProfile()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit Profile
+        </button>
       </div>
 
       <div class="card glass">
@@ -304,6 +352,86 @@
   </nav>
 </div>
 
+<!-- ==================== EDIT PROFILE MODAL ==================== -->
+<div id="editProfileModal" class="modal-overlay hidden">
+  <div class="modal-backdrop" onclick="closeEditProfile()"></div>
+  <div class="modal-sheet">
+    <div class="sheet-handle"></div>
+    <h3 class="sheet-title">Edit Profile</h3>
+
+    <!-- Avatar Preview & Picker -->
+    <div class="ep-avatar-section">
+      <div class="ep-avatar-preview">
+        <div class="profile-avatar-ring" style="width:80px;height:80px;margin:0 auto;">
+          <div class="profile-avatar" id="epAvatarPreview" style="font-size:1.6rem;">A</div>
+        </div>
+      </div>
+
+      <p class="ep-avatar-label">Choose avatar color</p>
+      <div class="ep-color-picker">
+        <button class="ep-color-dot" style="background:#3DD2CC;" data-color="#3DD2CC" onclick="selectAvatarColor(this)"></button>
+        <button class="ep-color-dot" style="background:#CBF9DA;" data-color="#CBF9DA" onclick="selectAvatarColor(this)"></button>
+        <button class="ep-color-dot" style="background:#FF6B6B;" data-color="#FF6B6B" onclick="selectAvatarColor(this)"></button>
+        <button class="ep-color-dot" style="background:#FFD93D;" data-color="#FFD93D" onclick="selectAvatarColor(this)"></button>
+        <button class="ep-color-dot" style="background:#A78BFA;" data-color="#A78BFA" onclick="selectAvatarColor(this)"></button>
+        <button class="ep-color-dot" style="background:#FB923C;" data-color="#FB923C" onclick="selectAvatarColor(this)"></button>
+        <button class="ep-color-dot" style="background:#34D399;" data-color="#34D399" onclick="selectAvatarColor(this)"></button>
+        <button class="ep-color-dot" style="background:#F472B6;" data-color="#F472B6" onclick="selectAvatarColor(this)"></button>
+      </div>
+
+      <!-- Photo upload option -->
+      <label class="ep-photo-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Upload Photo
+        <input type="file" id="epPhotoInput" accept="image/*" onchange="handleAvatarPhoto(this)" style="display:none">
+      </label>
+    </div>
+
+    <!-- Fields -->
+    <div style="display:flex;flex-direction:column;gap:14px;margin-top:4px;">
+      <div class="input-float">
+        <input type="text" id="epUsername" placeholder=" " maxlength="30">
+        <label>Username</label>
+      </div>
+      <div class="input-float">
+        <input type="text" id="epName" placeholder=" " maxlength="40">
+        <label>Display Name</label>
+      </div>
+      <div class="input-float">
+        <input type="text" id="epBio" placeholder=" " maxlength="80">
+        <label>Bio (optional)</label>
+      </div>
+    </div>
+
+    <!-- Change Password Toggle -->
+    <button class="ep-pw-toggle" onclick="toggleChangePassword()">
+      <span>🔒 Change Password</span>
+      <span class="accordion-arrow" id="epPwArrow">›</span>
+    </button>
+    <div id="epPwSection" class="accordion-body hidden" style="display:flex;flex-direction:column;gap:12px;margin-top:8px;">
+      <div class="input-float">
+        <input type="password" id="epCurrentPw" placeholder=" ">
+        <label>Current Password</label>
+      </div>
+      <div class="input-float">
+        <input type="password" id="epNewPw" placeholder=" ">
+        <label>New Password (min 6)</label>
+      </div>
+      <div class="input-float">
+        <input type="password" id="epConfirmPw" placeholder=" ">
+        <label>Confirm New Password</label>
+      </div>
+    </div>
+
+    <div id="epError" class="form-error" style="margin-top:8px;min-height:16px;"></div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px;">
+      <button class="btn-neon" onclick="saveProfile()">Save Changes</button>
+      <button class="btn-ghost" onclick="closeEditProfile()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== SHARE MODAL (Bottom Sheet) ==================== -->
 <div id="shareModal" class="modal-overlay hidden">
   <div class="modal-backdrop" onclick="closeShareModal()"></div>
@@ -322,14 +450,67 @@
         <div class="share-stats-row">
           <div class="ss"><span class="ss-val neon" id="shareCardDist">0.00</span><span class="ss-lbl">km</span></div>
           <div class="ss"><span class="ss-val" id="shareCardTime">00:00</span><span class="ss-lbl">time</span></div>
-          <div class="ss"><span class="ss-val" id="shareCardPace">--:--</span><span class="ss-lbl">pace</span></div>
+          <div class="ss"><span class="ss-val" id="shareCardPace">--:--</span><span class="ss-lbl" id="shareCardPaceLabel">pace</span></div>
         </div>
       </div>
     </div>
 
     <div class="modal-btns">
-      <button class="btn-neon" onclick="downloadShareCard()">⬇ Download Image</button>
+      <div class="share-link-row">
+        <input type="text" id="shareLinkInput" class="share-link-input" readonly placeholder="Generating link...">
+        <button class="btn-copy-link" onclick="copyShareLink()" title="Copy link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        </button>
+      </div>
+      <button class="btn-neon" onclick="shareActivity()">🔗 Share Link</button>
+      <button class="btn-neon btn-neon-outline" onclick="downloadShareCard()">⬇ Download Image</button>
       <button class="btn-ghost" onclick="closeShareModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SHARED ACTIVITY VIEW ==================== -->
+<div id="sharedActivityView" class="shared-view hidden">
+  <div class="shared-view-inner">
+    <div class="shared-brand-bar">
+      <span class="shared-brand-logo">⚡ RunFun</span>
+      <a href="javascript:void(0)" onclick="window.location.hash=''; window.location.reload();" class="shared-open-app">Open App →</a>
+    </div>
+
+    <div class="shared-map-wrap" id="sharedMapWrap">
+      <div id="sharedMap"></div>
+    </div>
+
+    <div class="shared-body">
+      <div class="shared-pill" id="sharedType">🏃 Running Session</div>
+      <p class="shared-by" id="sharedUser">by @athlete</p>
+      <p class="shared-date-txt" id="sharedDate">May 22, 2026</p>
+
+      <div class="shared-stats-grid">
+        <div class="shared-stat-box">
+          <span class="shared-stat-val" id="sharedDist">0.00</span>
+          <span class="shared-stat-lbl">km</span>
+        </div>
+        <div class="shared-stat-box">
+          <span class="shared-stat-val" id="sharedTime">00:00</span>
+          <span class="shared-stat-lbl">duration</span>
+        </div>
+        <div class="shared-stat-box">
+          <span class="shared-stat-val accent" id="sharedPace">--:--</span>
+          <span class="shared-stat-lbl" id="sharedPaceLabel">pace /km</span>
+        </div>
+        <div class="shared-stat-box">
+          <span class="shared-stat-val" id="sharedCal">0</span>
+          <span class="shared-stat-lbl">calories</span>
+        </div>
+      </div>
+
+      <div class="shared-cta">
+        <p class="shared-cta-text">Want to track your own runs?</p>
+        <a href="javascript:void(0)" onclick="window.location.hash=''; window.location.reload();" class="btn-neon" style="display:block;text-align:center;padding:16px;border-radius:14px;color:#0c1b26;font-weight:700;background:linear-gradient(135deg,#3DD2CC,#2ec4be);text-decoration:none;box-shadow:0 4px 20px rgba(61,210,204,0.3)">
+          ⚡ Try RunFun Free
+        </a>
+      </div>
     </div>
   </div>
 </div>
