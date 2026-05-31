@@ -829,7 +829,7 @@ async function openShareModal(actId) {
   const act = acts.find(a => a.id === actId);
   if (!act) return;
 
-  _pendingShareActivity = act;
+  _pendingShareActivity = { ...act, _username: currentUser.username };
   document.getElementById('shareModal').classList.remove('hidden');
 
   const mins = Math.floor(act.duration / 60);
@@ -838,16 +838,21 @@ async function openShareModal(actId) {
   const metricVal = isCycling
     ? formatSpeed(act.duration, act.distance)
     : (act.distance > 0 ? formatPace(act.duration, act.distance) : '--:--');
-  const metricLbl = isCycling ? 'km/h' : 'pace';
+  const metricLbl = isCycling ? 'km/h' : 'Pace /km';
 
-  document.getElementById('shareCardTitle').textContent =
-    `${act.type.charAt(0).toUpperCase() + act.type.slice(1)} Session`;
-  document.getElementById('shareCardDate').textContent =
-    new Date(act.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const typeEmoji = act.type === 'cycling' ? '🚴' : act.type === 'walking' ? '🚶' : '🏃';
+  const typeLabel = act.type.charAt(0).toUpperCase() + act.type.slice(1);
+  const dateStr = new Date(act.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  // Populate new Strava-style card
+  const typePill = document.getElementById('shareCardTypePill');
+  if (typePill) typePill.textContent = `${typeEmoji} ${typeLabel}`;
+
+  document.getElementById('shareCardTitle').textContent = `${typeLabel} Session`;
+  document.getElementById('shareCardDate').textContent = `${dateStr} · by @${currentUser.username}`;
   document.getElementById('shareCardDist').textContent = act.distance.toFixed(2);
   document.getElementById('shareCardTime').textContent = `${mins}:${secs}`;
   document.getElementById('shareCardPace').textContent = metricVal;
-  // Update label di share card
   const paceLabel = document.getElementById('shareCardPaceLabel');
   if (paceLabel) paceLabel.textContent = metricLbl;
 
@@ -979,19 +984,175 @@ function closeShareModal() {
 }
 
 async function downloadShareCard() {
-  const card = document.getElementById('shareCard');
-  showToast('⏳ Rendering card...');
+  const act = _pendingShareActivity;
+  if (!act) return;
+  showToast('⏳ Generating card...');
+
   try {
-    const canvas = await html2canvas(card, {
-      useCORS: true, backgroundColor: '#0c1b26', scale: 2
+    const W = 800, H = 600;
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    // ── Background ──
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(0, 0, W, H);
+
+    // ── Map screenshot (if route exists) ──
+    let mapImgDrawn = false;
+    if (act.route && act.route.length > 1) {
+      try {
+        // Render map to canvas using Leaflet map element
+        const mapEl = document.getElementById('shareLeafletMap');
+        const mapCanvas = await html2canvas(mapEl, {
+          useCORS: true, allowTaint: true, backgroundColor: '#0a0f14',
+          scale: 1, logging: false
+        });
+        // Draw map in top portion (56%)
+        const mapH = Math.round(H * 0.56);
+        ctx.drawImage(mapCanvas, 0, 0, W, mapH);
+
+        // Gradient overlay bottom of map
+        const grad = ctx.createLinearGradient(0, mapH - 80, 0, mapH);
+        grad.addColorStop(0, 'rgba(26,26,26,0)');
+        grad.addColorStop(1, 'rgba(26,26,26,1)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, mapH - 80, W, 80);
+        mapImgDrawn = true;
+      } catch (e) { /* fall through to no-map design */ }
+    }
+
+    // If no map, draw a pattern background
+    if (!mapImgDrawn) {
+      ctx.fillStyle = '#111111';
+      ctx.fillRect(0, 0, W, H * 0.56);
+      // grid lines
+      ctx.strokeStyle = 'rgba(61,210,204,0.05)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x <= W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H * 0.56); ctx.stroke(); }
+      for (let y = 0; y <= H * 0.56; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+      // "No Route" label
+      ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      ctx.font = '700 14px DM Sans, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('📍 Route not recorded', W / 2, H * 0.28);
+      ctx.textAlign = 'left';
+
+      const grad = ctx.createLinearGradient(0, H * 0.46, 0, H * 0.56);
+      grad.addColorStop(0, 'rgba(26,26,26,0)');
+      grad.addColorStop(1, 'rgba(26,26,26,1)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, H * 0.46, W, H * 0.1);
+    }
+
+    // ── Info area ──
+    const infoY = Math.round(H * 0.56);
+    const pad = 48;
+
+    // Activity type pill
+    const typeEmoji = act.type === 'cycling' ? '🚴' : act.type === 'walking' ? '🚶' : '🏃';
+    const typeLabel = act.type.charAt(0).toUpperCase() + act.type.slice(1);
+    ctx.save();
+    ctx.fillStyle = 'rgba(61,210,204,0.12)';
+    const pillW = 120, pillH = 28, pillR = 14;
+    ctx.beginPath();
+    ctx.roundRect(pad, infoY + 18, pillW, pillH, pillR);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(61,210,204,0.3)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = '#3DD2CC';
+    ctx.font = '700 12px DM Sans, sans-serif';
+    ctx.fillText(`${typeEmoji} ${typeLabel.toUpperCase()}`, pad + 14, infoY + 18 + 18);
+    ctx.restore();
+
+    // Title
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 30px DM Sans, sans-serif';
+    ctx.fillText(`${typeLabel} Session`, pad, infoY + 78);
+
+    // Date + username
+    const dateStr = new Date(act.createdAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '400 14px DM Sans, sans-serif';
+    ctx.fillText(`${dateStr}  ·  @${_pendingShareActivity._username || 'athlete'}`, pad, infoY + 104);
+
+    // Divider
+    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(pad, infoY + 120);
+    ctx.lineTo(W - pad, infoY + 120);
+    ctx.stroke();
+
+    // Stats - three columns
+    const statsY = infoY + 150;
+    const colW = (W - pad * 2) / 3;
+    const isCycling = act.type === 'cycling';
+    const mins = Math.floor(act.duration / 60);
+    const secs = String(act.duration % 60).padStart(2, '0');
+    const paceVal = isCycling ? formatSpeed(act.duration, act.distance) : (act.distance > 0 ? formatPace(act.duration, act.distance) : '--:--');
+    const paceLbl = isCycling ? 'SPEED' : 'PACE /km';
+
+    const stats = [
+      { val: act.distance.toFixed(2), lbl: 'DISTANCE (KM)', neon: true },
+      { val: `${mins}:${secs}`, lbl: 'TIME', neon: false },
+      { val: paceVal, lbl: paceLbl, neon: false }
+    ];
+
+    stats.forEach((s, i) => {
+      const x = pad + i * colW;
+      // Value
+      ctx.fillStyle = s.neon ? '#3DD2CC' : '#ffffff';
+      ctx.font = '700 36px "Space Mono", monospace';
+      ctx.fillText(s.val, x, statsY);
+      // Label
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.font = '600 11px DM Sans, sans-serif';
+      ctx.letterSpacing = '1px';
+      ctx.fillText(s.lbl, x, statsY + 22);
     });
+
+    // Divider before brand
+    const brandY = H - 52;
+    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(pad, brandY - 10);
+    ctx.lineTo(W - pad, brandY - 10);
+    ctx.stroke();
+
+    // Brand logo box
+    ctx.fillStyle = '#3DD2CC';
+    ctx.beginPath();
+    ctx.roundRect(pad, brandY, 28, 28, 6);
+    ctx.fill();
+    ctx.fillStyle = '#0c1b26';
+    ctx.font = '900 13px DM Sans, sans-serif';
+    ctx.fillText('R', pad + 9, brandY + 19);
+
+    // Brand name
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '800 15px DM Sans, sans-serif';
+    ctx.fillText('RunFun', pad + 38, brandY + 19);
+
+    // Tagline right
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.font = '400 12px DM Sans, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('Push Your Limits', W - pad, brandY + 19);
+    ctx.textAlign = 'left';
+
+    // ── Download ──
     const link = document.createElement('a');
-    link.download = `RunFun_${_pendingShareActivity.id}.png`;
+    link.download = `RunFun_${act.type}_${new Date(act.createdAt).toISOString().slice(0,10)}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
-    showToast('✅ Downloaded!');
+    showToast('✅ Card downloaded!');
   } catch (err) {
-    showToast('❌ Render failed.');
+    console.error(err);
+    showToast('❌ Download failed. Try again.');
   }
 }
 

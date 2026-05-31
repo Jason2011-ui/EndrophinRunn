@@ -444,13 +444,26 @@
         <div id="shareLeafletMap"></div>
       </div>
       <div class="share-info-area">
-        <div class="share-brand">⚡ RunFun</div>
+        <div class="share-type-pill" id="shareCardTypePill">🏃 Running</div>
         <h2 id="shareCardTitle" class="share-title">Morning Run</h2>
-        <p id="shareCardDate" class="share-date">May 21, 2026</p>
+        <p id="shareCardDate" class="share-date">May 21, 2026 · by @athlete</p>
         <div class="share-stats-row">
-          <div class="ss"><span class="ss-val neon" id="shareCardDist">0.00</span><span class="ss-lbl">km</span></div>
-          <div class="ss"><span class="ss-val" id="shareCardTime">00:00</span><span class="ss-lbl">time</span></div>
-          <div class="ss"><span class="ss-val" id="shareCardPace">--:--</span><span class="ss-lbl" id="shareCardPaceLabel">pace</span></div>
+          <div class="ss">
+            <span class="ss-val neon" id="shareCardDist">0.00</span>
+            <span class="ss-lbl">Distance (km)</span>
+          </div>
+          <div class="ss" style="padding-left:16px;">
+            <span class="ss-val" id="shareCardTime">00:00</span>
+            <span class="ss-lbl">Time</span>
+          </div>
+          <div class="ss" style="padding-left:16px;">
+            <span class="ss-val" id="shareCardPace">--:--</span>
+            <span class="ss-lbl" id="shareCardPaceLabel">Pace /km</span>
+          </div>
+        </div>
+        <div class="share-brand">
+          <span class="share-brand-dot">R</span>
+          <span class="share-brand-name">RunFun</span>
         </div>
       </div>
     </div>

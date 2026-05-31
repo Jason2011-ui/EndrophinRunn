@@ -870,42 +870,98 @@ button { font-family: var(--font); }
 }
 .modal-overlay.hidden .modal-sheet { transform: translateY(100%); }
 
+/* ===== STRAVA-STYLE SHARE CARD ===== */
 .share-card {
-  border-radius: var(--r-md); overflow: hidden;
-  background: #0a1520;
-  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 20px; overflow: hidden;
+  background: #1a1a1a;
+  border: none;
   margin: 16px 0;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  font-family: var(--font);
 }
-.share-map-area { width: 100%; height: 200px; position: relative; }
+
+/* Map takes up top 55% of card */
+.share-map-area {
+  width: 100%; height: 220px; position: relative;
+  overflow: hidden;
+}
 #shareLeafletMap { width: 100%; height: 100%; }
 
+/* Dark overlay gradient at bottom of map */
+.share-map-area::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 60px;
+  background: linear-gradient(to bottom, transparent, #1a1a1a);
+  pointer-events: none;
+  z-index: 400;
+}
+
+/* Bottom info area */
 .share-info-area {
-  padding: 20px;
-  background: linear-gradient(180deg, var(--navy), var(--dark));
+  padding: 14px 20px 20px;
+  background: #1a1a1a;
   position: relative;
 }
-.share-brand {
-  position: absolute; top: -14px; right: 20px;
-  background: var(--neon); color: var(--dark);
-  padding: 4px 12px; border-radius: 20px;
-  font-size: 0.72rem; font-weight: 800;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
-.share-title { font-size: 1.3rem; font-weight: 700; }
-.share-date { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
 
-.share-stats-row {
-  display: flex; gap: 16px;
-  margin-top: 16px; padding-top: 14px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+/* Type badge like Strava "Run" pill */
+.share-type-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(61,210,204,0.12);
+  border: 1px solid rgba(61,210,204,0.25);
+  color: var(--neon);
+  padding: 3px 10px; border-radius: 100px;
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;
+  text-transform: uppercase; margin-bottom: 8px;
 }
-.ss { flex: 1; }
+
+.share-title {
+  font-size: 1.15rem; font-weight: 700;
+  color: #fff; line-height: 1.2;
+  margin-bottom: 1px;
+}
+.share-date { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-bottom: 14px; }
+
+/* Stats grid - Strava style: big numbers */
+.share-stats-row {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  margin-top: 0;
+  border-top: none;
+}
+.ss {
+  display: flex; flex-direction: column;
+  padding: 0;
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+.ss:last-child { border-right: none; }
 .ss-val {
-  font-family: var(--mono); font-size: 1.2rem;
-  font-weight: 700; display: block;
+  font-family: var(--mono);
+  font-size: 1.55rem; font-weight: 700;
+  display: block; color: #fff; line-height: 1;
 }
 .ss-val.neon { color: var(--neon); }
-.ss-lbl { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+.ss-lbl {
+  font-size: 0.65rem; color: rgba(255,255,255,0.35);
+  text-transform: uppercase; letter-spacing: 0.8px;
+  margin-top: 4px; font-weight: 500;
+}
+
+/* Bottom branding bar like Strava orange logo */
+.share-brand {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 14px; padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  font-size: 0.8rem; font-weight: 800; color: rgba(255,255,255,0.5);
+  letter-spacing: -0.3px;
+}
+.share-brand-dot {
+  width: 22px; height: 22px; border-radius: 6px;
+  background: var(--neon);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 900; color: #0c1b26;
+}
+.share-brand-name { color: #fff; font-weight: 800; }
 
 .modal-btns {
   display: flex; flex-direction: column; gap: 10px;
