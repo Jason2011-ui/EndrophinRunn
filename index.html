@@ -439,32 +439,44 @@
     <div class="sheet-handle"></div>
     <h3 class="sheet-title">Share Activity</h3>
 
-    <div id="shareCard" class="share-card">
-      <div class="share-map-area">
+    <!-- Strava-style vertical share card -->
+    <div id="shareCard" class="share-card-strava">
+      <!-- Map fills top ~55% -->
+      <div class="scs-map-wrap">
         <div id="shareLeafletMap"></div>
+        <!-- Gradient fade bottom of map -->
+        <div class="scs-map-fade"></div>
+        <!-- Activity type badge top-left -->
+        <div class="scs-badge" id="shareCardTypePill">🏃 Running</div>
       </div>
-      <div class="share-info-area">
-        <div class="share-type-pill" id="shareCardTypePill">🏃 Running</div>
-        <h2 id="shareCardTitle" class="share-title">Morning Run</h2>
-        <p id="shareCardDate" class="share-date">May 21, 2026 · by @athlete</p>
-        <div class="share-stats-row">
-          <div class="ss">
-            <span class="ss-val neon" id="shareCardDist">0.00</span>
-            <span class="ss-lbl">Distance (km)</span>
+
+      <!-- Stats block overlapping map bottom edge -->
+      <div class="scs-stats-block">
+        <div class="scs-stat-main">
+          <span class="scs-stat-big" id="shareCardDist">0.00</span>
+          <span class="scs-stat-unit">km</span>
+        </div>
+        <div class="scs-stat-row">
+          <div class="scs-stat-item">
+            <span class="scs-stat-label">Pace</span>
+            <span class="scs-stat-val" id="shareCardPace">--:--</span>
+            <span class="scs-stat-sub" id="shareCardPaceLabel">/km</span>
           </div>
-          <div class="ss" style="padding-left:16px;">
-            <span class="ss-val" id="shareCardTime">00:00</span>
-            <span class="ss-lbl">Time</span>
-          </div>
-          <div class="ss" style="padding-left:16px;">
-            <span class="ss-val" id="shareCardPace">--:--</span>
-            <span class="ss-lbl" id="shareCardPaceLabel">Pace /km</span>
+          <div class="scs-stat-divider"></div>
+          <div class="scs-stat-item">
+            <span class="scs-stat-label">Waktu</span>
+            <span class="scs-stat-val" id="shareCardTime">00:00</span>
           </div>
         </div>
-        <div class="share-brand">
-          <span class="share-brand-dot">R</span>
-          <span class="share-brand-name">RunFun</span>
+      </div>
+
+      <!-- Brand footer -->
+      <div class="scs-footer">
+        <div class="scs-footer-brand">
+          <span class="scs-brand-icon">R</span>
+          <span class="scs-brand-text">RunFun</span>
         </div>
+        <span class="scs-footer-date" id="shareCardDate">–</span>
       </div>
     </div>
 

@@ -848,13 +848,15 @@ async function openShareModal(actId) {
   const typePill = document.getElementById('shareCardTypePill');
   if (typePill) typePill.textContent = `${typeEmoji} ${typeLabel}`;
 
-  document.getElementById('shareCardTitle').textContent = `${typeLabel} Session`;
-  document.getElementById('shareCardDate').textContent = `${dateStr} · by @${currentUser.username}`;
   document.getElementById('shareCardDist').textContent = act.distance.toFixed(2);
   document.getElementById('shareCardTime').textContent = `${mins}:${secs}`;
   document.getElementById('shareCardPace').textContent = metricVal;
   const paceLabel = document.getElementById('shareCardPaceLabel');
-  if (paceLabel) paceLabel.textContent = metricLbl;
+  if (paceLabel) paceLabel.textContent = isCycling ? 'km/h' : '/km';
+
+  // Date for footer
+  const footerDate = document.getElementById('shareCardDate');
+  if (footerDate) footerDate.textContent = dateStr;
 
   // Generate shareable link
   const sharePayload = {
@@ -989,159 +991,164 @@ async function downloadShareCard() {
   showToast('⏳ Generating card...');
 
   try {
-    const W = 800, H = 600;
+    // Portrait card: 540×720 (like Strava mobile share)
+    const W = 540, H = 720;
     const canvas = document.createElement('canvas');
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext('2d');
 
     // ── Background ──
-    ctx.fillStyle = '#1a1a1a';
+    ctx.fillStyle = '#111111';
     ctx.fillRect(0, 0, W, H);
 
-    // ── Map screenshot (if route exists) ──
+    // ── Map area (top ~58%) ──
+    const mapH = Math.round(H * 0.58);
     let mapImgDrawn = false;
+
     if (act.route && act.route.length > 1) {
       try {
-        // Render map to canvas using Leaflet map element
         const mapEl = document.getElementById('shareLeafletMap');
         const mapCanvas = await html2canvas(mapEl, {
-          useCORS: true, allowTaint: true, backgroundColor: '#0a0f14',
+          useCORS: true, allowTaint: true,
+          backgroundColor: '#0c1520',
           scale: 1, logging: false
         });
-        // Draw map in top portion (56%)
-        const mapH = Math.round(H * 0.56);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, W, mapH);
+        ctx.clip();
         ctx.drawImage(mapCanvas, 0, 0, W, mapH);
-
-        // Gradient overlay bottom of map
-        const grad = ctx.createLinearGradient(0, mapH - 80, 0, mapH);
-        grad.addColorStop(0, 'rgba(26,26,26,0)');
-        grad.addColorStop(1, 'rgba(26,26,26,1)');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, mapH - 80, W, 80);
+        ctx.restore();
         mapImgDrawn = true;
-      } catch (e) { /* fall through to no-map design */ }
+      } catch (e) { /* fall through */ }
     }
 
-    // If no map, draw a pattern background
     if (!mapImgDrawn) {
-      ctx.fillStyle = '#111111';
-      ctx.fillRect(0, 0, W, H * 0.56);
-      // grid lines
-      ctx.strokeStyle = 'rgba(61,210,204,0.05)';
+      // Dark map placeholder with subtle grid
+      ctx.fillStyle = '#0c1520';
+      ctx.fillRect(0, 0, W, mapH);
+      ctx.strokeStyle = 'rgba(61,210,204,0.04)';
       ctx.lineWidth = 1;
-      for (let x = 0; x <= W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H * 0.56); ctx.stroke(); }
-      for (let y = 0; y <= H * 0.56; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-
-      // "No Route" label
-      ctx.fillStyle = 'rgba(255,255,255,0.12)';
-      ctx.font = '700 14px DM Sans, sans-serif';
+      for (let x = 0; x <= W; x += 32) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, mapH); ctx.stroke(); }
+      for (let y = 0; y <= mapH; y += 32) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx.font = '600 13px DM Sans, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('📍 Route not recorded', W / 2, H * 0.28);
+      ctx.fillText('📍 Route not recorded', W / 2, mapH / 2);
       ctx.textAlign = 'left';
-
-      const grad = ctx.createLinearGradient(0, H * 0.46, 0, H * 0.56);
-      grad.addColorStop(0, 'rgba(26,26,26,0)');
-      grad.addColorStop(1, 'rgba(26,26,26,1)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, H * 0.46, W, H * 0.1);
     }
 
-    // ── Info area ──
-    const infoY = Math.round(H * 0.56);
-    const pad = 48;
+    // Gradient fade at bottom of map
+    const fadeGrad = ctx.createLinearGradient(0, mapH - 90, 0, mapH);
+    fadeGrad.addColorStop(0, 'rgba(17,17,17,0)');
+    fadeGrad.addColorStop(1, 'rgba(17,17,17,1)');
+    ctx.fillStyle = fadeGrad;
+    ctx.fillRect(0, mapH - 90, W, 90);
 
-    // Activity type pill
+    // ── Activity type badge (top-left of map) ──
     const typeEmoji = act.type === 'cycling' ? '🚴' : act.type === 'walking' ? '🚶' : '🏃';
     const typeLabel = act.type.charAt(0).toUpperCase() + act.type.slice(1);
+    const badgeText = `${typeEmoji}  ${typeLabel.toUpperCase()}`;
+    ctx.font = '700 11px DM Sans, sans-serif';
+    const badgeMetrics = ctx.measureText(badgeText);
+    const bw = badgeMetrics.width + 24, bh = 26, bx = 20, by = 18;
+
     ctx.save();
-    ctx.fillStyle = 'rgba(61,210,204,0.12)';
-    const pillW = 120, pillH = 28, pillR = 14;
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
     ctx.beginPath();
-    ctx.roundRect(pad, infoY + 18, pillW, pillH, pillR);
+    ctx.roundRect(bx, by, bw, bh, 13);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(61,210,204,0.3)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
     ctx.lineWidth = 1;
     ctx.stroke();
-    ctx.fillStyle = '#3DD2CC';
-    ctx.font = '700 12px DM Sans, sans-serif';
-    ctx.fillText(`${typeEmoji} ${typeLabel.toUpperCase()}`, pad + 14, infoY + 18 + 18);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(badgeText, bx + 12, by + 17);
     ctx.restore();
 
-    // Title
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '700 30px DM Sans, sans-serif';
-    ctx.fillText(`${typeLabel} Session`, pad, infoY + 78);
-
-    // Date + username
-    const dateStr = new Date(act.createdAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.font = '400 14px DM Sans, sans-serif';
-    ctx.fillText(`${dateStr}  ·  @${_pendingShareActivity._username || 'athlete'}`, pad, infoY + 104);
-
-    // Divider
-    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(pad, infoY + 120);
-    ctx.lineTo(W - pad, infoY + 120);
-    ctx.stroke();
-
-    // Stats - three columns
-    const statsY = infoY + 150;
-    const colW = (W - pad * 2) / 3;
+    // ── Stats area ──
+    const statsY = mapH + 10;
+    const padX = 24;
     const isCycling = act.type === 'cycling';
     const mins = Math.floor(act.duration / 60);
     const secs = String(act.duration % 60).padStart(2, '0');
-    const paceVal = isCycling ? formatSpeed(act.duration, act.distance) : (act.distance > 0 ? formatPace(act.duration, act.distance) : '--:--');
-    const paceLbl = isCycling ? 'SPEED' : 'PACE /km';
+    const paceVal = isCycling
+      ? formatSpeed(act.duration, act.distance)
+      : (act.distance > 0 ? formatPace(act.duration, act.distance) : '--:--');
 
-    const stats = [
-      { val: act.distance.toFixed(2), lbl: 'DISTANCE (KM)', neon: true },
-      { val: `${mins}:${secs}`, lbl: 'TIME', neon: false },
-      { val: paceVal, lbl: paceLbl, neon: false }
-    ];
+    // Big distance
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 72px "Space Mono", monospace';
+    const distStr = act.distance.toFixed(2);
+    ctx.fillText(distStr, padX, statsY + 70);
 
-    stats.forEach((s, i) => {
-      const x = pad + i * colW;
-      // Value
-      ctx.fillStyle = s.neon ? '#3DD2CC' : '#ffffff';
-      ctx.font = '700 36px "Space Mono", monospace';
-      ctx.fillText(s.val, x, statsY);
-      // Label
-      ctx.fillStyle = 'rgba(255,255,255,0.3)';
-      ctx.font = '600 11px DM Sans, sans-serif';
-      ctx.letterSpacing = '1px';
-      ctx.fillText(s.lbl, x, statsY + 22);
-    });
+    // "km" unit
+    const distMetrics = ctx.measureText(distStr);
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '500 22px DM Sans, sans-serif';
+    ctx.fillText('km', padX + distMetrics.width + 8, statsY + 70);
 
-    // Divider before brand
-    const brandY = H - 52;
-    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    // Pace and Time row
+    const row2Y = statsY + 100;
+    // Left: Pace
+    ctx.fillStyle = 'rgba(255,255,255,0.32)';
+    ctx.font = '600 10px DM Sans, sans-serif';
+    ctx.letterSpacing = '1px';
+    ctx.fillText('PACE', padX, row2Y);
+    ctx.letterSpacing = '0px';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 28px "Space Mono", monospace';
+    ctx.fillText(paceVal, padX, row2Y + 26);
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    ctx.font = '500 11px DM Sans, sans-serif';
+    ctx.fillText(isCycling ? 'km/h' : '/km', padX, row2Y + 42);
+
+    // Divider
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(pad, brandY - 10);
-    ctx.lineTo(W - pad, brandY - 10);
+    ctx.moveTo(W / 2 - 20, row2Y - 4);
+    ctx.lineTo(W / 2 - 20, row2Y + 46);
+    ctx.stroke();
+
+    // Right: Waktu
+    const col2X = W / 2;
+    ctx.fillStyle = 'rgba(255,255,255,0.32)';
+    ctx.font = '600 10px DM Sans, sans-serif';
+    ctx.letterSpacing = '1px';
+    ctx.fillText('WAKTU', col2X, row2Y);
+    ctx.letterSpacing = '0px';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 28px "Space Mono", monospace';
+    ctx.fillText(`${mins}j ${secs}m`, col2X, row2Y + 26);
+
+    // ── Footer divider ──
+    const footerY = H - 58;
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padX, footerY);
+    ctx.lineTo(W - padX, footerY);
     ctx.stroke();
 
     // Brand logo box
     ctx.fillStyle = '#3DD2CC';
     ctx.beginPath();
-    ctx.roundRect(pad, brandY, 28, 28, 6);
+    ctx.roundRect(padX, footerY + 12, 26, 26, 6);
     ctx.fill();
     ctx.fillStyle = '#0c1b26';
-    ctx.font = '900 13px DM Sans, sans-serif';
-    ctx.fillText('R', pad + 9, brandY + 19);
+    ctx.font = '900 12px DM Sans, sans-serif';
+    ctx.fillText('R', padX + 8, footerY + 12 + 17);
 
-    // Brand name
     ctx.fillStyle = '#ffffff';
-    ctx.font = '800 15px DM Sans, sans-serif';
-    ctx.fillText('RunFun', pad + 38, brandY + 19);
+    ctx.font = '800 14px DM Sans, sans-serif';
+    ctx.fillText('RunFun', padX + 34, footerY + 30);
 
-    // Tagline right
-    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    // Date right
+    const dateStr = new Date(act.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
     ctx.font = '400 12px DM Sans, sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText('Push Your Limits', W - pad, brandY + 19);
+    ctx.fillText(dateStr, W - padX, footerY + 30);
     ctx.textAlign = 'left';
 
     // ── Download ──
